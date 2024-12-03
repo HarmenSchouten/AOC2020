@@ -2,44 +2,74 @@ const text = await Deno.readTextFile("./Day19/input.txt")
 
 const parts = text.split("\r\n\r\n")
 
+const messages = parts[1].split("\r\n")
+
 const rules = parts[0]
     .split("\r\n")
     .map(item => {
         const [key, rest] = item.split(": ")
-        const isValue = rest.includes("\"")
+        const isOption = item.includes("|")
+        const isString = rest.includes("\"")
 
-        if (isValue) {
-            return {
-                key: Number(key),
-                isValue: isValue,
-                value: rest.replaceAll("\"", "")
-            }
-        }
-        const rules = rest.split(" | ")
         return {
-            key: Number(key),
-            isValue: isValue,
-            rule1: rules[0].split(" ").map(String),
-            rule2: rules[1]?.split(" ")?.map(String)
+            key: key,
+            value: rest.replaceAll("\"", ""),
+            isOption: isOption,
+            isString: isString
         }
     })
 
-const find = (key: number) => {
-    const rule = rules.find(item => item.key === key)
 
-    if (rule?.isValue) return rule.value
+let value = [rules[0].value]
+let i = 0;
+while (true) {
+    
 
-    let a1;
-    if (!rule?.isValue && rule?.rule1) {
-        a1 = rule.rule1.map(item => find(Number(item)))
+    const test = value
+        .reduce((acc, state) => {
+            console.log(state)
+            const isOption = state.includes(" | ")
+            const isDigit = !isNaN(Number(state))
+
+            if (isOption) {
+                // Look around, replace options with new values
+                const options = state.split(" | ")
+
+                const option1 = acc.map(item => [...item, ...options[0].split(" ")])
+                const option2 = acc.map(item => [...item, ...options[1].split(" ")])
+
+                return [...option1, ...option2]
+            } else {
+                // Split on whitespace, put in new rule value
+            }
+
+            if (isDigit) {
+                return acc.map(item => [...item, rules[Number(state)].value])
+            } else {
+                return acc.map(item => [...item, state])
+            }
+        }, [[]] as string[][])
+
+    console.log(`========  ${i} ========= `)
+    console.log(test)
+    
+    console.log(value)
+
+    value = test.flatMap(item => item)
+    
+    i++
+    
+    if (i > 1) {
+        break;
     }
-
-    let a2;
-    if (!rule?.isValue && rule?.rule2) {
-        a2 = rule.rule2.map(item => find(Number(item)))
-    }
-
-    return [a1, a2]
+    // if (test.every(item => !item.join("").match(/\d/g))) {
+    //     break;
+    // }
 }
 
-console.log(JSON.stringify(find(0)[0]))
+// console.log(value.map(item => item.join("")))
+// console.log(messages)
+
+// const answer = value.filter(item => messages.find(message => message === item.join("")) !== undefined).length
+
+// console.log(answer)
